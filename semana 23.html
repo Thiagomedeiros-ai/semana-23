@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Configurar Workflow - GitHub Pages</title>
+  <style>
+    :root{--bg:#0f1724;--panel:#0b1220;--muted:#94a3b8;--accent:#60a5fa}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e6eef8;background:linear-gradient(180deg,#071029 0%, #081226 100%);padding:28px}
+    .wrap{max-width:980px;margin:0 auto;background:linear-gradient(180deg,#081224 0%, rgba(255,255,255,0.02) 100%);border-radius:12px;padding:24px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    h1{margin:0 0 8px;font-size:1.5rem}
+    p.lead{color:var(--muted);margin-top:0}
+    pre{background:var(--panel);padding:16px;border-radius:8px;overflow:auto;line-height:1.45;margin-top:12px;white-space:pre-wrap}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+    button, a.button{background:var(--accent);color:#07203a;border:0;padding:10px 14px;border-radius:8px;cursor:pointer;text-decoration:none;font-weight:600}
+    .muted{color:var(--muted);font-size:0.9rem;margin-top:12px}
+    code.small{background:#07111a;padding:2px 6px;border-radius:6px}
+    .note{margin-top:12px;padding:10px;border-radius:8px;background:#071424;color:var(--muted)}
+    footer{margin-top:18px;color:var(--muted);font-size:0.85rem;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap" role="main">
+    <h1>Workflow: Deploy para GitHub Pages</h1>
+    <p class="lead">Clique em <strong>Baixar deploy.yml</strong> para obter o arquivo pronto. Depois posicione o arquivo em <code class="small">.github/workflows/deploy.yml</code> no seu repositório e faça push na branch <code class="small">main</code>.</p>
+
+    <div class="note">
+      Observação rápida: o workflow publica todo o conteúdo do repositório no GitHub Pages usando as Actions oficiais. Ele dispara em <code class="small">push</code> na branch <code class="small">main</code>.
+    </div>
+
+    <pre id="yamlContent"><code>name: Deploy página HTML no GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # publica sempre que houver push na branch principal
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fazer checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Fazer upload dos arquivos
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Publicar no GitHub Pages
+        uses: actions/deploy-pages@v4
+</code></pre>
+
+    <div class="row">
+      <button id="downloadYaml">Baixar deploy.yml</button>
+      <a class="button" id="copyYaml" href="#" role="button">Copiar para área de transferência</a>
+      <a class="button" id="instrucoes" href="#" role="button">Ver instruções rápidas</a>
+    </div>
+
+    <div class="muted" id="status" aria-live="polite"></div>
+
+    <div id="help" style="display:none;margin-top:14px">
+      <h3 style="margin:8px 0 6px">Instruções rápidas</h3>
+      <ol>
+        <li>Salve o arquivo baixado como <code class="small">deploy.yml</code>.</li>
+        <li>Crie a pasta no repositório: <code class="small">.github/workflows/</code>.</li>
+        <li>Mova o arquivo para essa pasta e faça commit &amp; push para a branch <code class="small">main</code>.</li>
+        <li>No GitHub: Vá em <strong>Settings → Pages → Build and deployment</strong> e confirme que a source é <em>GitHub Actions</em>.</li>
+        <li>Aguarde o workflow rodar e publicar — o link do Pages aparece nas configurações de Pages do repositório.</li>
+      </ol>
+    </div>
+
+    <footer>Feito para deployment automático de páginas estáticas • Salve em <code class="small">.github/workflows/deploy.yml</code></footer>
+  </div>
+
+  <script>
+    // Conteúdo YAML (mesmo que o <pre>)
+    const yamlText = document.getElementById('yamlContent').innerText.trim();
+
+    // Baixar como arquivo 'deploy.yml'
+    document.getElementById('downloadYaml').addEventListener('click', function(){
+      const blob = new Blob([yamlText], { type: 'text/yaml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'deploy.yml';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      document.getElementById('status').textContent = 'Arquivo deploy.yml baixado — coloque em .github/workflows/deploy.yml';
+    });
+
+    // Copiar para área de transferência
+    document.getElementById('copyYaml').addEventListener('click', async function(e){
+      e.preventDefault();
+      try {
+        await navigator.clipboard.writeText(yamlText);
+        document.getElementById('status').textContent = 'Conteúdo copiado para a área de transferência.';
+      } catch(err) {
+        document.getElementById('status').textContent = 'Não foi possível copiar automaticamente. Selecione o texto e copie manualmente.';
+      }
+    });
+
+    // Mostrar instruções rápidas
+    document.getElementById('instrucoes').addEventListener('click', function(e){
+      e.preventDefault();
+      const help = document.getElementById('help');
+      help.style.display = (help.style.display === 'none') ? 'block' : 'none';
+    });
+
+    // Acessibilidade: foco no botão principal
+    document.getElementById('downloadYaml').focus();
+  </script>
+</body>
+</html>
